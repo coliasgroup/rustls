@@ -470,7 +470,14 @@ use crate::crypto::ring as test_provider;
 // The public interface is:
 pub use crate::builder::{ConfigBuilder, ConfigSide, WantsVerifier, WantsVersions};
 pub use crate::common_state::{CommonState, IoState, Side};
-pub use crate::conn::{Connection, ConnectionCommon, Reader, SideData, Writer};
+pub use crate::conn::unbuffered::{
+    AppDataRecord, ConnectionState, EncodeError, EncodeTlsData, EncryptError,
+    InsufficientSizeError, ReadEarlyData, ReadTraffic, TransmitTlsData, UnbufferedStatus,
+    WriteTraffic,
+};
+#[cfg(feature = "std")]
+pub use crate::conn::Connection;
+pub use crate::conn::{ConnectionCommon, Reader, SideData, UnbufferedConnectionCommon, Writer};
 pub use crate::enums::{
     AlertDescription, CipherSuite, ContentType, HandshakeType, ProtocolVersion, SignatureAlgorithm,
     SignatureScheme,
