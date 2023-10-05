@@ -375,6 +375,7 @@ mod bs_debug;
 mod builder;
 mod enums;
 mod key_log;
+#[cfg(feature = "std")]
 mod key_log_file;
 mod suites;
 mod versions;
@@ -480,6 +481,7 @@ pub use crate::error::{
     PeerMisbehaved,
 };
 pub use crate::key_log::{KeyLog, NoKeyLog};
+#[cfg(feature = "std")]
 pub use crate::key_log_file::KeyLogFile;
 pub use crate::msgs::enums::NamedGroup;
 pub use crate::msgs::handshake::DistinguishedName;
