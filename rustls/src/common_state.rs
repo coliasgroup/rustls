@@ -182,6 +182,7 @@ impl CommonState {
     ///
     /// If internal buffers are too small, this function will not accept
     /// all the data.
+    #[cfg(feature = "std")]
     pub(crate) fn buffer_plaintext(&mut self, data: &[u8]) -> usize {
         self.perhaps_write_key_update();
         self.send_plain(data, Limit::Yes)
@@ -276,6 +277,7 @@ impl CommonState {
         // be out by whatever the cipher+record overhead is.  That's a
         // constant and predictable amount, so it's not a terrible issue.
         let len = match limit {
+            #[cfg(feature = "std")]
             Limit::Yes => self
                 .sendable_tls
                 .apply_limit(payload.len()),
@@ -324,6 +326,7 @@ impl CommonState {
             // If we haven't completed handshaking, buffer
             // plaintext to send once we do.
             let len = match limit {
+                #[cfg(feature = "std")]
                 Limit::Yes => self
                     .sendable_plaintext
                     .append_limited_copy(data),
@@ -687,6 +690,7 @@ impl CommonState {
         );
     }
 
+    #[cfg(feature = "std")]
     pub(crate) fn perhaps_write_key_update(&mut self) {
         if let Some(message) = self.queued_key_update_message.take() {
             self.sendable_tls.append(message);
@@ -786,6 +790,7 @@ pub(crate) enum Protocol {
 }
 
 enum Limit {
+    #[cfg(feature = "std")]
     Yes,
     No,
 }
