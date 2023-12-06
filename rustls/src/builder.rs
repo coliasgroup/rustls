@@ -3,9 +3,9 @@ use crate::error::Error;
 use crate::versions;
 
 use alloc::format;
+use alloc::sync::Arc;
 use core::fmt;
 use core::marker::PhantomData;
-use std::sync::Arc;
 
 #[cfg(doc)]
 use crate::{ClientConfig, ServerConfig};
