@@ -357,7 +357,7 @@ mod conn;
 pub mod crypto;
 mod error;
 mod hash_hs;
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "hashbrown"))]
 mod limited_cache;
 mod rand;
 mod record_layer;
