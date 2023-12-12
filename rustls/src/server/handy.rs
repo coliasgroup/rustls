@@ -1,15 +1,17 @@
 #[cfg(feature = "std")]
 use crate::error::Error;
+#[cfg(any(feature = "std", feature = "hashbrown"))]
+use crate::hash_map::HashMap;
 #[cfg(feature = "std")]
 use crate::limited_cache;
+#[cfg(any(feature = "std", feature = "hashbrown"))]
+use crate::lock::Mutex;
 use crate::msgs::handshake::CertificateChain;
 use crate::server;
 use crate::server::ClientHello;
 use crate::sign;
 #[cfg(feature = "std")]
 use crate::webpki::{verify_server_name, ParsedCertificate};
-#[cfg(any(feature = "std", feature = "hashbrown"))]
-use crate::hash_map::HashMap; 
 
 #[cfg(feature = "std")]
 use pki_types::{DnsName, ServerName};
@@ -21,8 +23,6 @@ use alloc::vec::Vec;
 use core::fmt::Debug;
 #[cfg(feature = "std")]
 use core::fmt::Formatter;
-#[cfg(feature = "std")]
-use std::sync::Mutex;
 
 /// Something which never stores sessions.
 #[derive(Debug)]

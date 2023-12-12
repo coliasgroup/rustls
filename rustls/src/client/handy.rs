@@ -3,6 +3,8 @@ use crate::enums::SignatureScheme;
 use crate::error::Error;
 #[cfg(feature = "std")]
 use crate::limited_cache;
+#[cfg(any(feature = "std", feature = "hashbrown"))]
+use crate::lock::Mutex;
 use crate::msgs::handshake::CertificateChain;
 use crate::msgs::persist;
 use crate::sign;
@@ -15,8 +17,6 @@ use alloc::collections::VecDeque;
 use alloc::sync::Arc;
 #[cfg(feature = "std")]
 use core::fmt;
-#[cfg(feature = "std")]
-use std::sync::Mutex;
 
 /// An implementer of `ClientSessionStore` which does nothing.
 #[derive(Debug)]

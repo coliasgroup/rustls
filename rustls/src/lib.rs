@@ -623,12 +623,43 @@ pub mod time_provider;
 #[cfg(any(feature = "std", feature = "hashbrown"))]
 mod hash_map {
     #[cfg(feature = "std")]
-    pub(crate) use std::collections::HashMap;
-    #[cfg(feature = "std")]
     pub(crate) use std::collections::hash_map::Entry;
+    #[cfg(feature = "std")]
+    pub(crate) use std::collections::HashMap;
 
     #[cfg(all(not(feature = "std"), feature = "hashbrown"))]
-    pub(crate) use hashbrown::HashMap;
-    #[cfg(all(not(feature = "std"), feature = "hashbrown"))]
     pub(crate) use hashbrown::hash_map::Entry;
+    #[cfg(all(not(feature = "std"), feature = "hashbrown"))]
+    pub(crate) use hashbrown::HashMap;
+}
+
+/// APIs for implementing locks on no-std environments.
+pub mod lock {
+    #[cfg(not(feature = "std"))]
+    use alloc::boxed::Box;
+
+    #[cfg(not(feature = "std"))]
+    /// A lock protecting shared data.
+    pub trait Lock: Send + Sync {
+        /// The state protected by the lock.
+        type Data: Send;
+
+        /// Acquire the lock.
+        fn lock(&self) -> Box<dyn core::ops::DerefMut<Target = Self::Data> + '_>;
+    }
+
+    #[cfg(not(feature = "std"))]
+    /// A lock builder.
+    pub trait MakeMutex {
+        /// Create a new mutex.
+        fn make_mutex<T>(value: T) -> Mutex<T>
+        where
+            T: Send + 'static;
+    }
+
+    #[cfg(not(feature = "std"))]
+    pub(crate) type Mutex<T> = alloc::sync::Arc<dyn Lock<Data = T>>;
+
+    #[cfg(feature = "std")]
+    pub(crate) use std::sync::Mutex;
 }

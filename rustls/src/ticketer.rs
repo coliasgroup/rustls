@@ -1,3 +1,4 @@
+use crate::lock::Mutex;
 use crate::rand;
 use crate::server::ProducesTickets;
 use crate::Error;
@@ -7,7 +8,7 @@ use pki_types::UnixTime;
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 use core::mem;
-use std::sync::{Mutex, MutexGuard};
+use core::ops::Deref;
 
 #[derive(Debug)]
 pub(crate) struct TicketSwitcherState {
@@ -62,7 +63,10 @@ impl TicketSwitcher {
     ///
     /// For efficiency, this is also responsible for locking the state mutex
     /// and returning the mutexguard.
-    pub(crate) fn maybe_roll(&self, now: UnixTime) -> Option<MutexGuard<TicketSwitcherState>> {
+    pub(crate) fn maybe_roll(
+        &self,
+        now: UnixTime,
+    ) -> Option<impl Deref<Target = TicketSwitcherState> + '_> {
         // The code below aims to make switching as efficient as possible
         // in the common case that the generator never fails. To achieve this
         // we run the following steps:
