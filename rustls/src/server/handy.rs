@@ -1,8 +1,8 @@
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "hashbrown"))]
 use crate::error::Error;
 #[cfg(any(feature = "std", feature = "hashbrown"))]
 use crate::hash_map::HashMap;
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "hashbrown"))]
 use crate::limited_cache;
 #[cfg(any(feature = "std", feature = "hashbrown"))]
 use crate::lock::Mutex;
@@ -10,18 +10,18 @@ use crate::msgs::handshake::CertificateChain;
 use crate::server;
 use crate::server::ClientHello;
 use crate::sign;
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "hashbrown"))]
 use crate::webpki::{verify_server_name, ParsedCertificate};
 
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "hashbrown"))]
 use pki_types::{DnsName, ServerName};
 
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "hashbrown"))]
 use alloc::string::{String, ToString};
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::fmt::Debug;
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "hashbrown"))]
 use core::fmt::Formatter;
 
 /// Something which never stores sessions.
@@ -46,43 +46,62 @@ impl server::StoresServerSessions for NoServerSessionStorage {
 /// An implementer of `StoresServerSessions` that stores everything
 /// in memory.  If enforces a limit on the number of stored sessions
 /// to bound memory usage.
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "hashbrown"))]
 pub struct ServerSessionMemoryCache {
     cache: Mutex<limited_cache::LimitedCache<Vec<u8>, Vec<u8>>>,
 }
 
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "hashbrown"))]
 impl ServerSessionMemoryCache {
     /// Make a new ServerSessionMemoryCache.  `size` is the maximum
     /// number of stored sessions, and may be rounded-up for
     /// efficiency.
+    #[cfg(feature = "std")]
     pub fn new(size: usize) -> Arc<Self> {
         Arc::new(Self {
             cache: Mutex::new(limited_cache::LimitedCache::new(size)),
         })
     }
+
+    /// Make a new ServerSessionMemoryCache.  `size` is the maximum
+    /// number of stored sessions, and may be rounded-up for
+    /// efficiency.
+    #[cfg(not(feature = "std"))]
+    pub fn new<M: crate::lock::MakeMutex>(size: usize) -> Arc<Self> {
+        Arc::new(Self {
+            cache: M::make_mutex(limited_cache::LimitedCache::new(size)),
+        })
+    }
 }
 
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "hashbrown"))]
 impl server::StoresServerSessions for ServerSessionMemoryCache {
     fn put(&self, key: Vec<u8>, value: Vec<u8>) -> bool {
-        self.cache
-            .lock()
-            .unwrap()
-            .insert(key, value);
+        #[cfg(feature = "std")]
+        let mut cache = self.cache.lock().unwrap();
+        #[cfg(not(feature = "std"))]
+        let mut cache = self.cache.lock();
+
+        cache.insert(key, value);
         true
     }
 
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
-        self.cache
-            .lock()
-            .unwrap()
-            .get(key)
-            .cloned()
+        #[cfg(feature = "std")]
+        let cache = self.cache.lock().unwrap();
+        #[cfg(not(feature = "std"))]
+        let cache = self.cache.lock();
+
+        cache.get(key).cloned()
     }
 
     fn take(&self, key: &[u8]) -> Option<Vec<u8>> {
-        self.cache.lock().unwrap().remove(key)
+        #[cfg(feature = "std")]
+        let mut cache = self.cache.lock().unwrap();
+        #[cfg(not(feature = "std"))]
+        let mut cache = self.cache.lock();
+
+        cache.remove(key)
     }
 
     fn can_cache(&self) -> bool {
@@ -90,7 +109,7 @@ impl server::StoresServerSessions for ServerSessionMemoryCache {
     }
 }
 
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "hashbrown"))]
 impl Debug for ServerSessionMemoryCache {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("ServerSessionMemoryCache")
@@ -156,13 +175,13 @@ impl server::ResolvesServerCert for AlwaysResolvesChain {
 
 /// Something that resolves do different cert chains/keys based
 /// on client-supplied server name (via SNI).
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "hashbrown"))]
 #[derive(Debug)]
 pub struct ResolvesServerCertUsingSni {
     by_name: HashMap<String, Arc<sign::CertifiedKey>>,
 }
 
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "hashbrown"))]
 impl ResolvesServerCertUsingSni {
     /// Create a new and empty (i.e., knows no certificates) resolver.
     pub fn new() -> Self {
@@ -205,7 +224,7 @@ impl ResolvesServerCertUsingSni {
     }
 }
 
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "hashbrown"))]
 impl server::ResolvesServerCert for ResolvesServerCertUsingSni {
     fn resolve(&self, client_hello: ClientHello) -> Option<Arc<sign::CertifiedKey>> {
         if let Some(name) = client_hello.server_name() {
