@@ -1,8 +1,8 @@
+use crate::hash_map::{Entry, HashMap}; 
+
 use alloc::collections::VecDeque;
 use core::borrow::Borrow;
 use core::hash::Hash;
-use std::collections::hash_map::Entry;
-use std::collections::HashMap;
 
 /// A HashMap-alike, which never gets larger than a specified
 /// capacity, and evicts the oldest insertion to maintain this.

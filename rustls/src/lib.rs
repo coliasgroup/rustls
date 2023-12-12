@@ -619,3 +619,16 @@ pub mod manual;
 
 #[cfg(not(feature = "std"))]
 pub mod time_provider;
+
+#[cfg(any(feature = "std", feature = "hashbrown"))]
+mod hash_map {
+    #[cfg(feature = "std")]
+    pub(crate) use std::collections::HashMap;
+    #[cfg(feature = "std")]
+    pub(crate) use std::collections::hash_map::Entry;
+
+    #[cfg(all(not(feature = "std"), feature = "hashbrown"))]
+    pub(crate) use hashbrown::HashMap;
+    #[cfg(all(not(feature = "std"), feature = "hashbrown"))]
+    pub(crate) use hashbrown::hash_map::Entry;
+}
