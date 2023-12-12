@@ -499,7 +499,6 @@ pub use crate::stream::{Stream, StreamOwned};
 pub use crate::suites::{
     CipherSuiteCommon, ConnectionTrafficSecrets, ExtractedSecrets, SupportedCipherSuite,
 };
-#[cfg(feature = "std")]
 pub use crate::ticketer::TicketSwitcher;
 #[cfg(feature = "tls12")]
 pub use crate::tls12::Tls12CipherSuite;
@@ -610,7 +609,6 @@ pub mod sign {
 /// APIs for implementing QUIC TLS
 pub mod quic;
 
-#[cfg(feature = "std")]
 /// APIs for implementing TLS tickets
 pub mod ticketer;
 
@@ -645,7 +643,7 @@ pub mod lock {
         type Data: Send;
 
         /// Acquire the lock.
-        fn lock(&self) -> Box<dyn core::ops::DerefMut<Target = Self::Data> + '_>;
+        fn lock(&self) -> MutexGuard<'_, Self::Data>;
     }
 
     #[cfg(not(feature = "std"))]
@@ -659,7 +657,11 @@ pub mod lock {
 
     #[cfg(not(feature = "std"))]
     pub(crate) type Mutex<T> = alloc::sync::Arc<dyn Lock<Data = T>>;
+    #[cfg(not(feature = "std"))]
+    pub(crate) type MutexGuard<'a, T> = Box<dyn core::ops::DerefMut<Target = T> + 'a>;
 
     #[cfg(feature = "std")]
     pub(crate) use std::sync::Mutex;
+    #[cfg(feature = "std")]
+    pub(crate) use std::sync::MutexGuard;
 }
