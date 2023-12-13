@@ -3,6 +3,8 @@
 use crate::error::Error;
 use crate::rand::GetRandomFailed;
 use crate::server::ProducesTickets;
+#[cfg(not(feature = "std"))]
+use crate::time_provider::TimeProvider;
 
 use super::ring_like::aead;
 use super::ring_like::rand::{SecureRandom, SystemRandom};
@@ -21,10 +23,26 @@ impl Ticketer {
     /// with a 12 hour life and randomly generated keys.
     ///
     /// The encryption mechanism used is Chacha20Poly1305.
+    #[cfg(feature = "std")]
     pub fn new() -> Result<Arc<dyn ProducesTickets>, Error> {
         Ok(Arc::new(crate::ticketer::TicketSwitcher::new(
             6 * 60 * 60,
             make_ticket_generator,
+        )?))
+    }
+
+    /// Make the recommended Ticketer.  This produces tickets
+    /// with a 12 hour life and randomly generated keys.
+    ///
+    /// The encryption mechanism used is Chacha20Poly1305.
+    #[cfg(not(feature = "std"))]
+    pub fn new<M: crate::lock::MakeMutex>(
+        time_provider: TimeProvider,
+    ) -> Result<Arc<dyn ProducesTickets>, Error> {
+        Ok(Arc::new(crate::ticketer::TicketSwitcher::new::<M>(
+            6 * 60 * 60,
+            make_ticket_generator,
+            time_provider,
         )?))
     }
 }
